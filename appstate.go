@@ -209,7 +209,8 @@ func (cli *Client) dispatchAppState(mutation appstate.Mutation, dispatchEvts boo
 }
 
 func (cli *Client) downloadExternalAppStateBlob(ref *waProto.ExternalBlobReference) ([]byte, error) {
-	return cli.Download(ref)
+	//return cli.Download(ref)
+	return nil, errors.New("unable to download")
 }
 
 func (cli *Client) fetchAppStatePatches(name appstate.WAPatchName, fromVersion uint64, snapshot bool) (*appstate.PatchList, error) {

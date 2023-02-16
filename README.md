@@ -3,6 +3,14 @@
 
 whatsmeow is a Go library for the WhatsApp web multidevice API.
 
+## 🚨 This is a fork
+
+You're probably looking for upstream: https://github.com/tulir/whatsmeow
+
+Notable changes from upstream:
+* Attachments/downloadable messages are *disabled*
+* Android packaging included in-tree (`gobind -v -o android.aar -target=android .`)
+
 ## Discussion
 Matrix room: [#whatsmeow:maunium.net](https://matrix.to/#/#whatsmeow:maunium.net)
 

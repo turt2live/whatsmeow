@@ -10,12 +10,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 
-	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -44,52 +43,52 @@ const (
 //
 // All of the downloadable messages inside a Message struct implement this interface
 // (ImageMessage, VideoMessage, AudioMessage, DocumentMessage, StickerMessage).
-type DownloadableMessage interface {
-	proto.Message
-	GetDirectPath() string
-	GetMediaKey() []byte
-	GetFileSha256() []byte
-	GetFileEncSha256() []byte
-}
+//type DownloadableMessage interface {
+//	proto.Message
+//	GetDirectPath() string
+//	GetMediaKey() []byte
+//	GetFileSha256() []byte
+//	GetFileEncSha256() []byte
+//}
 
 // DownloadableThumbnail represents a protobuf message that contains a thumbnail attachment.
 //
 // This is primarily meant for link preview thumbnails in ExtendedTextMessage.
-type DownloadableThumbnail interface {
-	proto.Message
-	GetThumbnailDirectPath() string
-	GetThumbnailSha256() []byte
-	GetThumbnailEncSha256() []byte
-	GetMediaKey() []byte
-}
+//type DownloadableThumbnail interface {
+//	proto.Message
+//	GetThumbnailDirectPath() string
+//	GetThumbnailSha256() []byte
+//	GetThumbnailEncSha256() []byte
+//	GetMediaKey() []byte
+//}
 
 // All the message types that are intended to be downloadable
 var (
-	_ DownloadableMessage   = (*waProto.ImageMessage)(nil)
-	_ DownloadableMessage   = (*waProto.AudioMessage)(nil)
-	_ DownloadableMessage   = (*waProto.VideoMessage)(nil)
-	_ DownloadableMessage   = (*waProto.DocumentMessage)(nil)
-	_ DownloadableMessage   = (*waProto.StickerMessage)(nil)
-	_ DownloadableMessage   = (*waProto.StickerMetadata)(nil)
-	_ DownloadableMessage   = (*waProto.HistorySyncNotification)(nil)
-	_ DownloadableMessage   = (*waProto.ExternalBlobReference)(nil)
-	_ DownloadableThumbnail = (*waProto.ExtendedTextMessage)(nil)
+// _ DownloadableMessage   = (*waProto.ImageMessage)(nil)
+// _ DownloadableMessage   = (*waProto.AudioMessage)(nil)
+// _ DownloadableMessage   = (*waProto.VideoMessage)(nil)
+// _ DownloadableMessage   = (*waProto.DocumentMessage)(nil)
+// _ DownloadableMessage   = (*waProto.StickerMessage)(nil)
+// _ DownloadableMessage   = (*waProto.StickerMetadata)(nil)
+// _ DownloadableMessage   = (*waProto.HistorySyncNotification)(nil)
+// _ DownloadableMessage   = (*waProto.ExternalBlobReference)(nil)
+// _ DownloadableThumbnail = (*waProto.ExtendedTextMessage)(nil)
 )
 
-type downloadableMessageWithLength interface {
-	DownloadableMessage
-	GetFileLength() uint64
-}
-
-type downloadableMessageWithSizeBytes interface {
-	DownloadableMessage
-	GetFileSizeBytes() uint64
-}
-
-type downloadableMessageWithURL interface {
-	DownloadableMessage
-	GetUrl() string
-}
+//type downloadableMessageWithLength interface {
+//	DownloadableMessage
+//	GetFileLength() uint64
+//}
+//
+//type downloadableMessageWithSizeBytes interface {
+//	DownloadableMessage
+//	GetFileSizeBytes() uint64
+//}
+//
+//type downloadableMessageWithURL interface {
+//	DownloadableMessage
+//	GetUrl() string
+//}
 
 var classToMediaType = map[protoreflect.Name]MediaType{
 	"ImageMessage":    MediaImage,
@@ -124,30 +123,34 @@ func (cli *Client) DownloadAny(msg *waProto.Message) (data []byte, err error) {
 		return nil, ErrNothingDownloadableFound
 	}
 	switch {
-	case msg.ImageMessage != nil:
-		return cli.Download(msg.ImageMessage)
-	case msg.VideoMessage != nil:
-		return cli.Download(msg.VideoMessage)
-	case msg.AudioMessage != nil:
-		return cli.Download(msg.AudioMessage)
-	case msg.DocumentMessage != nil:
-		return cli.Download(msg.DocumentMessage)
-	case msg.StickerMessage != nil:
-		return cli.Download(msg.StickerMessage)
+	//case msg.ImageMessage != nil:
+	//	return cli.Download(msg.ImageMessage)
+	//case msg.VideoMessage != nil:
+	//	return cli.Download(msg.VideoMessage)
+	//case msg.AudioMessage != nil:
+	//	return cli.Download(msg.AudioMessage)
+	//case msg.DocumentMessage != nil:
+	//	return cli.Download(msg.DocumentMessage)
+	//case msg.StickerMessage != nil:
+	//	return cli.Download(msg.StickerMessage)
 	default:
 		return nil, ErrNothingDownloadableFound
 	}
 }
 
-func getSize(msg DownloadableMessage) int {
-	switch sized := msg.(type) {
-	case downloadableMessageWithLength:
-		return int(sized.GetFileLength())
-	case downloadableMessageWithSizeBytes:
-		return int(sized.GetFileSizeBytes())
-	default:
-		return -1
-	}
+//func getSize(msg DownloadableMessage) int {
+//	switch sized := msg.(type) {
+//	case downloadableMessageWithLength:
+//		return int(sized.GetFileLength())
+//	case downloadableMessageWithSizeBytes:
+//		return int(sized.GetFileSizeBytes())
+//	default:
+//		return -1
+//	}
+//}
+
+func (cli *Client) DownloadThumbnail(x interface{}) ([]byte, error) {
+	return nil, errors.New("unable to download")
 }
 
 // DownloadThumbnail downloads a thumbnail from a message.
@@ -157,20 +160,24 @@ func getSize(msg DownloadableMessage) int {
 //	var msg *waProto.Message
 //	...
 //	thumbnailImageBytes, err := cli.DownloadThumbnail(msg.GetExtendedTextMessage())
-func (cli *Client) DownloadThumbnail(msg DownloadableThumbnail) ([]byte, error) {
-	mediaType, ok := classToThumbnailMediaType[msg.ProtoReflect().Descriptor().Name()]
-	if !ok {
-		return nil, fmt.Errorf("%w '%s'", ErrUnknownMediaType, string(msg.ProtoReflect().Descriptor().Name()))
-	} else if len(msg.GetThumbnailDirectPath()) > 0 {
-		return cli.DownloadMediaWithPath(msg.GetThumbnailDirectPath(), msg.GetThumbnailEncSha256(), msg.GetThumbnailSha256(), msg.GetMediaKey(), -1, mediaType, mediaTypeToMMSType[mediaType])
-	} else {
-		return nil, ErrNoURLPresent
-	}
-}
+//func (cli *Client) DownloadThumbnail(msg DownloadableThumbnail) ([]byte, error) {
+//	mediaType, ok := classToThumbnailMediaType[msg.ProtoReflect().Descriptor().Name()]
+//	if !ok {
+//		return nil, fmt.Errorf("%w '%s'", ErrUnknownMediaType, string(msg.ProtoReflect().Descriptor().Name()))
+//	} else if len(msg.GetThumbnailDirectPath()) > 0 {
+//		return cli.DownloadMediaWithPath(msg.GetThumbnailDirectPath(), msg.GetThumbnailEncSha256(), msg.GetThumbnailSha256(), msg.GetMediaKey(), -1, mediaType, mediaTypeToMMSType[mediaType])
+//	} else {
+//		return nil, ErrNoURLPresent
+//	}
+//}
 
 // GetMediaType returns the MediaType value corresponding to the given protobuf message.
-func GetMediaType(msg DownloadableMessage) MediaType {
-	return classToMediaType[msg.ProtoReflect().Descriptor().Name()]
+//func GetMediaType(msg DownloadableMessage) MediaType {
+//	return classToMediaType[msg.ProtoReflect().Descriptor().Name()]
+//}
+
+func (cli *Client) Download(x interface{}) ([]byte, error) {
+	return nil, errors.New("unable to download")
 }
 
 // Download downloads the attachment from the given protobuf message.
@@ -182,29 +189,29 @@ func GetMediaType(msg DownloadableMessage) MediaType {
 //	imageData, err := cli.Download(msg.GetImageMessage())
 //
 // You can also use DownloadAny to download the first non-nil sub-message.
-func (cli *Client) Download(msg DownloadableMessage) ([]byte, error) {
-	mediaType, ok := classToMediaType[msg.ProtoReflect().Descriptor().Name()]
-	if !ok {
-		return nil, fmt.Errorf("%w '%s'", ErrUnknownMediaType, string(msg.ProtoReflect().Descriptor().Name()))
-	}
-	urlable, ok := msg.(downloadableMessageWithURL)
-	var url string
-	var isWebWhatsappNetURL bool
-	if ok {
-		url = urlable.GetUrl()
-		isWebWhatsappNetURL = strings.HasPrefix(urlable.GetUrl(), "https://web.whatsapp.net")
-	}
-	if len(msg.GetDirectPath()) > 0 {
-		return cli.DownloadMediaWithPath(msg.GetDirectPath(), msg.GetFileEncSha256(), msg.GetFileSha256(), msg.GetMediaKey(), getSize(msg), mediaType, mediaTypeToMMSType[mediaType])
-	} else if len(url) > 0 && !isWebWhatsappNetURL {
-		return cli.downloadAndDecrypt(urlable.GetUrl(), msg.GetMediaKey(), mediaType, getSize(msg), msg.GetFileEncSha256(), msg.GetFileSha256())
-	} else {
-		if isWebWhatsappNetURL {
-			cli.Log.Warnf("Got a media message with a web.whatsapp.net URL (%s) and no direct path", url)
-		}
-		return nil, ErrNoURLPresent
-	}
-}
+//func (cli *Client) Download(msg DownloadableMessage) ([]byte, error) {
+//	mediaType, ok := classToMediaType[msg.ProtoReflect().Descriptor().Name()]
+//	if !ok {
+//		return nil, fmt.Errorf("%w '%s'", ErrUnknownMediaType, string(msg.ProtoReflect().Descriptor().Name()))
+//	}
+//	urlable, ok := msg.(downloadableMessageWithURL)
+//	var url string
+//	var isWebWhatsappNetURL bool
+//	if ok {
+//		url = urlable.GetUrl()
+//		isWebWhatsappNetURL = strings.HasPrefix(urlable.GetUrl(), "https://web.whatsapp.net")
+//	}
+//	if len(msg.GetDirectPath()) > 0 {
+//		return cli.DownloadMediaWithPath(msg.GetDirectPath(), msg.GetFileEncSha256(), msg.GetFileSha256(), msg.GetMediaKey(), getSize(msg), mediaType, mediaTypeToMMSType[mediaType])
+//	} else if len(url) > 0 && !isWebWhatsappNetURL {
+//		return cli.downloadAndDecrypt(urlable.GetUrl(), msg.GetMediaKey(), mediaType, getSize(msg), msg.GetFileEncSha256(), msg.GetFileSha256())
+//	} else {
+//		if isWebWhatsappNetURL {
+//			cli.Log.Warnf("Got a media message with a web.whatsapp.net URL (%s) and no direct path", url)
+//		}
+//		return nil, ErrNoURLPresent
+//	}
+//}
 
 // DownloadMediaWithPath downloads an attachment by manually specifying the path and encryption details.
 func (cli *Client) DownloadMediaWithPath(directPath string, encFileHash, fileHash, mediaKey []byte, fileLength int, mediaType MediaType, mmsType string) (data []byte, err error) {
