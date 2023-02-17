@@ -8,13 +8,13 @@ package whatsmeow
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"go.mau.fi/whatsmeow/types/events"
 	waLog "go.mau.fi/whatsmeow/util/log"
+	"rsc.io/qr"
 )
 
 type QRChannelItem struct {
@@ -177,7 +177,13 @@ func (cli *Client) GetQRChannel(ctx context.Context) (<-chan QRChannelItem, erro
 	return ch, nil
 }
 
+var qrChan <-chan QRChannelItem
+var lastQrCode string
+
 func (cli *Client) GetQRCode() (string, error) {
+	if qrChan != nil {
+		return lastQrCode, nil
+	}
 	ch, err := cli.GetQRChannel(context.Background())
 	if !cli.IsConnected() {
 		err := cli.Connect()
@@ -188,10 +194,31 @@ func (cli *Client) GetQRCode() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	for evt := range ch {
-		if evt.Event == "code" {
-			return evt.Code, nil
+	qrChan = ch
+	firstCode := make(chan string)
+	go func() {
+		didFirstCode := false
+		for evt := range ch {
+			if evt.Event == "code" {
+				lastQrCode = evt.Code
+				if !didFirstCode {
+					firstCode <- lastQrCode
+					didFirstCode = true
+				}
+			}
 		}
+	}()
+	return <-firstCode, nil
+}
+
+func (cli *Client) GetQRCodeImage() ([]byte, error) {
+	txt, err := cli.GetQRCode()
+	if err != nil {
+		return nil, err
 	}
-	return "", errors.New("didn't return")
+	img, err := qr.Encode(txt, qr.L)
+	if err != nil {
+		return nil, err
+	}
+	return img.PNG(), nil
 }
