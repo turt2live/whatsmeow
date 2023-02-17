@@ -7,6 +7,7 @@
 package binary
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"time"
@@ -68,58 +69,62 @@ func (au *AttrUtility) JID(key string) types.JID {
 	return jid
 }
 
-func (au *AttrUtility) GetString(key string, require bool) (strVal string, ok bool) {
-	var val interface{}
-	if val, ok = au.Attrs[key]; !ok {
+func (au *AttrUtility) GetString(key string, require bool) (string, error) {
+	var strVal string
+	var err error
+	//var val interface{}
+	if val, ok := au.Attrs[key]; !ok {
 		if require {
 			au.Errors = append(au.Errors, fmt.Errorf("didn't find required attribute '%s'", key))
 		}
+		err = errors.New("not ok")
 	} else if strVal, ok = val.(string); !ok {
 		au.Errors = append(au.Errors, fmt.Errorf("expected attribute '%s' to be string, but was %T", key, val))
+		err = errors.New("not ok")
 	}
-	return
+	return strVal, err
 }
 
-func (au *AttrUtility) GetInt64(key string, require bool) (int64, bool) {
-	if strVal, ok := au.GetString(key, require); !ok {
-		return 0, false
+func (au *AttrUtility) GetInt64(key string, require bool) (int64, error) {
+	if strVal, err := au.GetString(key, require); err != nil {
+		return 0, errors.New("not ok")
 	} else if intVal, err := strconv.ParseInt(strVal, 10, 64); err != nil {
 		au.Errors = append(au.Errors, fmt.Errorf("failed to parse int in attribute '%s': %w", key, err))
-		return 0, false
+		return 0, errors.New("not ok")
 	} else {
-		return intVal, true
+		return intVal, nil
 	}
 }
 
-func (au *AttrUtility) GetUint64(key string, require bool) (uint64, bool) {
-	if strVal, ok := au.GetString(key, require); !ok {
-		return 0, false
+func (au *AttrUtility) GetUint64(key string, require bool) (uint64, error) {
+	if strVal, err := au.GetString(key, require); err != nil {
+		return 0, errors.New("not ok")
 	} else if intVal, err := strconv.ParseUint(strVal, 10, 64); err != nil {
 		au.Errors = append(au.Errors, fmt.Errorf("failed to parse uint in attribute '%s': %w", key, err))
-		return 0, false
+		return 0, errors.New("not ok")
 	} else {
-		return intVal, true
+		return intVal, nil
 	}
 }
 
-func (au *AttrUtility) GetBool(key string, require bool) (bool, bool) {
-	if strVal, ok := au.GetString(key, require); !ok {
-		return false, false
+func (au *AttrUtility) GetBool(key string, require bool) (bool, error) {
+	if strVal, err := au.GetString(key, require); err != nil {
+		return false, errors.New("not ok")
 	} else if boolVal, err := strconv.ParseBool(strVal); err != nil {
 		au.Errors = append(au.Errors, fmt.Errorf("failed to parse bool in attribute '%s': %w", key, err))
-		return false, false
+		return false, errors.New("not ok")
 	} else {
-		return boolVal, true
+		return boolVal, nil
 	}
 }
 
-func (au *AttrUtility) GetUnixTime(key string, require bool) (time.Time, bool) {
-	if intVal, ok := au.GetInt64(key, require); !ok {
-		return time.Time{}, false
+func (au *AttrUtility) GetUnixTime(key string, require bool) (time.Time, error) {
+	if intVal, err := au.GetInt64(key, require); err != nil {
+		return time.Time{}, errors.New("not ok")
 	} else if intVal == 0 {
-		return time.Time{}, true
+		return time.Time{}, nil
 	} else {
-		return time.Unix(intVal, 0), true
+		return time.Unix(intVal, 0), nil
 	}
 }
 

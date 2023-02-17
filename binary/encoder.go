@@ -134,9 +134,11 @@ func (w *binaryEncoder) write(data interface{}) {
 
 func (w *binaryEncoder) writeString(data string) {
 	var dictIndex byte
-	if tokenIndex, ok := token.IndexOfSingleToken(data); ok {
+	if tokenIndex, err := token.IndexOfSingleToken(data); err == nil {
 		w.pushByte(tokenIndex)
-	} else if dictIndex, tokenIndex, ok = token.IndexOfDoubleByteToken(data); ok {
+	} else if parts, err := token.IndexOfDoubleByteToken(data); err == nil {
+		dictIndex = parts[0]
+		tokenIndex = parts[1]
 		w.pushByte(token.Dictionary0 + dictIndex)
 		w.pushByte(tokenIndex)
 	} else if validateNibble(data) {

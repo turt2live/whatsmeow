@@ -25,6 +25,7 @@ import (
 	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/socket"
 	"go.mau.fi/whatsmeow/store"
+	"go.mau.fi/whatsmeow/store/sqlstore"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
 	"go.mau.fi/whatsmeow/util/keys"
@@ -137,6 +138,12 @@ type Client struct {
 // In general it shouldn't go past a few buffered messages, but the channel is big to be safe.
 const handlerQueueSize = 2048
 
+func NewClient(path string) *Client {
+	s, _ := sqlstore.New("sqlite3", "file:"+path+"?_foreign_keys=on", nil)
+	d, _ := s.GetFirstDevice()
+	return newClient(d, nil)
+}
+
 // NewClient initializes a new WhatsApp web client.
 //
 // The logger can be nil, it will default to a no-op logger.
@@ -153,7 +160,7 @@ const handlerQueueSize = 2048
 //		panic(err)
 //	}
 //	client := whatsmeow.NewClient(deviceStore, nil)
-func NewClient(deviceStore *store.Device, log waLog.Logger) *Client {
+func newClient(deviceStore *store.Device, log waLog.Logger) *Client {
 	if log == nil {
 		log = waLog.Noop
 	}

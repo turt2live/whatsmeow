@@ -113,7 +113,7 @@ func (cli *Client) parseMessageInfo(node *waBinary.Node) (*types.MessageInfo, er
 			if err != nil {
 				cli.Log.Warnf("Failed to parse verified_name node in %s: %v", info.ID, err)
 			}
-		} else if mediaType, ok := child.AttrGetter().GetString("mediatype", false); ok {
+		} else if mediaType, err := child.AttrGetter().GetString("mediatype", false); err == nil {
 			info.MediaType = mediaType
 		}
 	}

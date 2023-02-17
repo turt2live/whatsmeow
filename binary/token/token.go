@@ -2,7 +2,10 @@
 // encoding uses to save bytes when sending commonly used strings.
 package token
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // All the currently known string tokens.
 var (
@@ -55,16 +58,22 @@ func GetDoubleToken(index1, index2 int) (string, error) {
 
 // IndexOfSingleToken gets the index of the single-byte token with the given string value.
 // If there's no token with the given value, the second return value will be false.
-func IndexOfSingleToken(token string) (val byte, ok bool) {
-	val, ok = mdSingleByteTokenIndex[token]
-	return
+func IndexOfSingleToken(token string) (byte, error) {
+	val, ok := mdSingleByteTokenIndex[token]
+	if !ok {
+		return 0, errors.New("not ok")
+	}
+	return val, nil
 }
 
 // IndexOfDoubleByteToken gets the index of the double-byte token with the given string value.
 // If there's no token with the given value, the third return value will be false.
-func IndexOfDoubleByteToken(token string) (byte, byte, bool) {
+func IndexOfDoubleByteToken(token string) ([]byte, error) {
 	val, ok := mdDoubleByteTokenIndex[token]
-	return val.dictionary, val.index, ok
+	if !ok {
+		return nil, errors.New("not ok")
+	}
+	return []byte{val.dictionary, val.index}, nil
 }
 
 // Type tokens used in the binary XML representation.

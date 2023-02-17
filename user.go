@@ -443,8 +443,8 @@ func parseDeviceList(user string, deviceNode waBinary.Node) []types.JID {
 	children := deviceList.GetChildren()
 	devices := make([]types.JID, 0, len(children))
 	for _, device := range children {
-		deviceID, ok := device.AttrGetter().GetInt64("id", true)
-		if device.Tag != "device" || !ok {
+		deviceID, err := device.AttrGetter().GetInt64("id", true)
+		if device.Tag != "device" || err != nil {
 			continue
 		}
 		devices = append(devices, types.NewADJID(user, 0, byte(deviceID)))
