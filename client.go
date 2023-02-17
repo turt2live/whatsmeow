@@ -20,6 +20,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	_ "github.com/mattn/go-sqlite3"
 	"go.mau.fi/whatsmeow/appstate"
 	waBinary "go.mau.fi/whatsmeow/binary"
 	waProto "go.mau.fi/whatsmeow/binary/proto"
@@ -139,8 +140,14 @@ type Client struct {
 const handlerQueueSize = 2048
 
 func NewClient(path string) *Client {
-	s, _ := sqlstore.New("sqlite3", "file:"+path+"?_foreign_keys=on", nil)
-	d, _ := s.GetFirstDevice()
+	s, err := sqlstore.New("sqlite3", "file:"+path+"?_foreign_keys=on", nil)
+	if err != nil {
+		panic(errors.New("error creating sqlstore: " + err.Error()))
+	}
+	d, err := s.GetFirstDevice()
+	if err != nil {
+		panic(errors.New("error getting device: " + err.Error()))
+	}
 	return newClient(d, nil)
 }
 
@@ -645,4 +652,8 @@ func (cli *Client) ParseWebMessage(chatJID types.JID, webMsg *waProto.WebMessage
 	}
 	evt.UnwrapRaw()
 	return evt, nil
+}
+
+func (cli *Client) HasSession() bool {
+	return cli.Store.ID != nil
 }

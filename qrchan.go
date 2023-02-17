@@ -8,6 +8,7 @@ package whatsmeow
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -174,4 +175,23 @@ func (cli *Client) GetQRChannel(ctx context.Context) (<-chan QRChannelItem, erro
 	}
 	qrc.handlerID = cli.AddEventHandler(qrc.handleEvent)
 	return ch, nil
+}
+
+func (cli *Client) GetQRCode() (string, error) {
+	if !cli.IsConnected() {
+		err := cli.Connect()
+		if err != nil {
+			return "", err
+		}
+	}
+	ch, err := cli.GetQRChannel(context.Background())
+	if err != nil {
+		return "", err
+	}
+	for evt := range ch {
+		if evt.Event == "code" {
+			return evt.Code, nil
+		}
+	}
+	return "", errors.New("didn't return")
 }
