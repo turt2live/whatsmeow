@@ -178,13 +178,13 @@ func (cli *Client) GetQRChannel(ctx context.Context) (<-chan QRChannelItem, erro
 }
 
 func (cli *Client) GetQRCode() (string, error) {
+	ch, err := cli.GetQRChannel(context.Background())
 	if !cli.IsConnected() {
 		err := cli.Connect()
 		if err != nil {
 			return "", err
 		}
 	}
-	ch, err := cli.GetQRChannel(context.Background())
 	if err != nil {
 		return "", err
 	}
