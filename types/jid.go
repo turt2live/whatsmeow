@@ -45,11 +45,11 @@ type MessageID = string
 // AD JIDs are only used to refer to specific devices of users, so the server is always s.whatsapp.net (DefaultUserServer).
 // Regular JIDs can be used for entities on any servers (users, groups, broadcasts).
 type JID struct {
-	User   string
-	Agent  uint8
-	Device uint8
-	Server string
-	AD     bool
+	User   string `json:"user"`
+	Agent  uint8  `json:"agent"`
+	Device uint8  `json:"device"`
+	Server string `json:"server"`
+	AD     bool   `json:"ad"`
 }
 
 // UserInt returns the user as an integer. This is only safe to run on normal users, not on groups or broadcast lists.

@@ -8,6 +8,7 @@ package whatsmeow
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -381,6 +382,19 @@ func (cli *Client) JoinGroupWithLink(code string) (types.JID, error) {
 		return types.EmptyJID, &ElementMissingError{Tag: "group", In: "response to group link join query"}
 	}
 	return groupNode.AttrGetter().JID("jid"), nil
+}
+
+func (cli *Client) GetEncodedJoinedGroups() (string, error) {
+	grps, err := cli.GetJoinedGroups()
+	if err != nil {
+		return "", err
+	}
+	//return strconv.Itoa(len(grps)), nil
+	b, err := json.Marshal(grps)
+	if err != nil {
+		return "", err
+	}
+	return string(b), nil
 }
 
 // GetJoinedGroups returns the list of groups the user is participating in.

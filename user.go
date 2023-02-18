@@ -192,6 +192,18 @@ func (cli *Client) IsOnWhatsApp(phones []string) ([]types.IsOnWhatsAppResponse, 
 	return output, nil
 }
 
+func (cli *Client) GetUserDisplayName(jid string) (string, error) {
+	parsed, err := types.ParseJID(jid)
+	if err != nil {
+		return "", err
+	}
+	contact, err := cli.Store.Contacts.GetContact(parsed)
+	if err != nil {
+		return "", err
+	}
+	return contact.FullName, nil
+}
+
 // GetUserInfo gets basic user info (avatar, status, verified business name, device list).
 func (cli *Client) GetUserInfo(jids []types.JID) (map[types.JID]types.UserInfo, error) {
 	list, err := cli.usync(context.TODO(), jids, "full", "background", []waBinary.Node{

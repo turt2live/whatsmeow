@@ -279,6 +279,19 @@ func (cli *Client) getOwnID() types.JID {
 	return *id
 }
 
+func (cli *Client) GetEncodedOwnID() string {
+	id := cli.getOwnID()
+	return id.String()
+}
+
+func (cli *Client) IsSelf(encodedId string) (bool, error) {
+	jid, err := types.ParseJID(encodedId)
+	if err != nil {
+		return false, err
+	}
+	return jid.User == cli.getOwnID().User, nil
+}
+
 func (cli *Client) WaitForConnection(timeout time.Duration) bool {
 	timeoutChan := time.After(timeout)
 	cli.socketLock.RLock()

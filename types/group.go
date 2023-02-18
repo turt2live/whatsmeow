@@ -18,8 +18,8 @@ const (
 
 // GroupInfo contains basic information about a group chat on WhatsApp.
 type GroupInfo struct {
-	JID      JID
-	OwnerJID JID
+	JID      JID `json:"jid"`
+	OwnerJID JID `json:"owner_jid"`
 
 	GroupName
 	GroupTopic
@@ -31,75 +31,75 @@ type GroupInfo struct {
 	GroupLinkedParent
 	GroupIsDefaultSub
 
-	GroupCreated time.Time
+	GroupCreated time.Time `json:"group_created"`
 
-	ParticipantVersionID string
-	Participants         []GroupParticipant
+	ParticipantVersionID string             `json:"participant_version_id"`
+	Participants         []GroupParticipant `json:"participants"`
 
-	MemberAddMode GroupMemberAddMode
+	MemberAddMode GroupMemberAddMode `json:"member_add_mode"`
 }
 
 type GroupParent struct {
-	IsParent                      bool
-	DefaultMembershipApprovalMode string // request_required
+	IsParent                      bool   `json:"is_parent"`
+	DefaultMembershipApprovalMode string `json:"default_membership_approval_mode"` // request_required
 }
 
 type GroupLinkedParent struct {
-	LinkedParentJID JID
+	LinkedParentJID JID `json:"linked_parent_jid"`
 }
 
 type GroupIsDefaultSub struct {
-	IsDefaultSubGroup bool
+	IsDefaultSubGroup bool `json:"is_default_sub_group"`
 }
 
 // GroupName contains the name of a group along with metadata of who set it and when.
 type GroupName struct {
-	Name      string
-	NameSetAt time.Time
-	NameSetBy JID
+	Name      string    `json:"name"`
+	NameSetAt time.Time `json:"name_set_at"`
+	NameSetBy JID       `json:"name_set_by"`
 }
 
 // GroupTopic contains the topic (description) of a group along with metadata of who set it and when.
 type GroupTopic struct {
-	Topic        string
-	TopicID      string
-	TopicSetAt   time.Time
-	TopicSetBy   JID
-	TopicDeleted bool
+	Topic        string    `json:"topic"`
+	TopicID      string    `json:"topic_id"`
+	TopicSetAt   time.Time `json:"topic_set_at"`
+	TopicSetBy   JID       `json:"topic_set_by"`
+	TopicDeleted bool      `json:"topic_deleted"`
 }
 
 // GroupLocked specifies whether the group info can only be edited by admins.
 type GroupLocked struct {
-	IsLocked bool
+	IsLocked bool `json:"is_locked"`
 }
 
 // GroupAnnounce specifies whether only admins can send messages in the group.
 type GroupAnnounce struct {
-	IsAnnounce        bool
-	AnnounceVersionID string
+	IsAnnounce        bool   `json:"is_announce"`
+	AnnounceVersionID string `json:"announce_version_id"`
 }
 
 // GroupParticipant contains info about a participant of a WhatsApp group chat.
 type GroupParticipant struct {
-	JID          JID
-	IsAdmin      bool
-	IsSuperAdmin bool
+	JID          JID  `json:"jid"`
+	IsAdmin      bool `json:"is_admin"`
+	IsSuperAdmin bool `json:"is_super_admin"`
 
 	// When creating groups, adding some participants may fail.
 	// In such cases, the error code will be here.
-	Error      int
-	AddRequest *GroupParticipantAddRequest
+	Error      int                         `json:"error"`
+	AddRequest *GroupParticipantAddRequest `json:"add_request"`
 }
 
 type GroupParticipantAddRequest struct {
-	Code       string
-	Expiration time.Time
+	Code       string    `json:"code"`
+	Expiration time.Time `json:"expiration"`
 }
 
 // GroupEphemeral contains the group's disappearing messages settings.
 type GroupEphemeral struct {
-	IsEphemeral       bool
-	DisappearingTimer uint32
+	IsEphemeral       bool   `json:"is_ephemeral"`
+	DisappearingTimer uint32 `json:"disappearing_timer"`
 }
 
 type GroupDelete struct {
