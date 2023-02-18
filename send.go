@@ -89,6 +89,16 @@ type SendRequestExtra struct {
 	Peer bool
 }
 
+func (cli *Client) SendTextMessage(groupId string, text string) error {
+	jid, err := types.ParseJID(groupId)
+	if err != nil {
+		return err
+	}
+	msg := &waProto.Message{Conversation: proto.String(text)}
+	_, err = cli.SendMessage(context.Background(), jid, msg)
+	return err
+}
+
 // SendMessage sends the given message.
 //
 // This method will wait for the server to acknowledge the message before returning.
