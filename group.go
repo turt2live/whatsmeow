@@ -46,6 +46,36 @@ type ReqCreateGroup struct {
 	types.GroupLinkedParent
 }
 
+func (cli *Client) CreateGroupEncoded(name string) (string, error) {
+	contacts, err := cli.Store.Contacts.GetAllContacts()
+	if err != nil {
+		return "", errors.New("failed to get contacts: " + err.Error())
+	}
+	// This is quite naughty... We should figure out a better way to do this.
+	var contactId types.JID
+	for k, _ := range contacts {
+		if k.User == cli.getOwnID().User {
+			continue
+		}
+		contactId = k
+		break
+	}
+	group, err := cli.CreateGroup(ReqCreateGroup{
+		Name:         name,
+		Participants: []types.JID{contactId},
+		CreateKey:    "",
+		GroupParent: types.GroupParent{
+			IsParent:                      false,
+			DefaultMembershipApprovalMode: "",
+		},
+		GroupLinkedParent: types.GroupLinkedParent{},
+	})
+	if err != nil {
+		return "", errors.New("failed to create group: " + err.Error())
+	}
+	return group.JID.String(), nil
+}
+
 // CreateGroup creates a group on WhatsApp with the given name and participants.
 //
 // See ReqCreateGroup for parameters.
