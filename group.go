@@ -47,6 +47,7 @@ type ReqCreateGroup struct {
 }
 
 func (cli *Client) CreateGroupEncoded(name string) (string, error) {
+	fmt.Println("Getting contacts...")
 	contacts, err := cli.Store.Contacts.GetAllContacts()
 	if err != nil {
 		return "", errors.New("failed to get contacts: " + err.Error())
@@ -60,6 +61,7 @@ func (cli *Client) CreateGroupEncoded(name string) (string, error) {
 		contactId = k
 		break
 	}
+	fmt.Println("Creating group...")
 	group, err := cli.CreateGroup(ReqCreateGroup{
 		Name:         name,
 		Participants: []types.JID{contactId},
@@ -73,6 +75,7 @@ func (cli *Client) CreateGroupEncoded(name string) (string, error) {
 	if err != nil {
 		return "", errors.New("failed to create group: " + err.Error())
 	}
+	fmt.Println("Group created")
 	return group.JID.String(), nil
 }
 
