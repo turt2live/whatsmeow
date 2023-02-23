@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"strings"
 
+	"go.mau.fi/whatsmeow/appstate"
 	waBinary "go.mau.fi/whatsmeow/binary"
 	"go.mau.fi/whatsmeow/types"
 	"go.mau.fi/whatsmeow/types/events"
@@ -52,16 +53,37 @@ func (cli *Client) CreateGroupEncoded(name string) (string, error) {
 	if err != nil {
 		return "", errors.New("failed to get contacts: " + err.Error())
 	}
+	fmt.Printf("Got %d contacts", len(contacts))
+	fmt.Println()
+	if len(contacts) <= 1 {
+		fmt.Println("Too few contacts! Assuming WhatsApp is broken and requesting app state...")
+		err = cli.FetchAppState(appstate.WAPatchCriticalUnblockLow, true, false)
+		if err != nil {
+			return "", errors.New("failed to refresh app state: " + err.Error())
+		}
+
+		// TODO: Don't copy/paste this block
+		fmt.Println("Getting contacts...")
+		contacts, err = cli.Store.Contacts.GetAllContacts()
+		if err != nil {
+			return "", errors.New("failed to get contacts: " + err.Error())
+		}
+		fmt.Printf("Got %d contacts", len(contacts))
+		fmt.Println()
+	}
 	// This is quite naughty... We should figure out a better way to do this.
 	var contactId types.JID
 	for k, _ := range contacts {
+		fmt.Println("Checking contact: " + k.String())
 		if k.User == cli.getOwnID().User {
+			fmt.Println("... is self, skipping")
 			continue
 		}
+		fmt.Println("... is valid - using")
 		contactId = k
 		break
 	}
-	fmt.Println("Creating group...")
+	fmt.Println("Creating group with contact: " + contactId.String())
 	group, err := cli.CreateGroup(ReqCreateGroup{
 		Name:         name,
 		Participants: []types.JID{contactId},

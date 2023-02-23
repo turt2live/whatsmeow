@@ -300,7 +300,7 @@ func (cli *Client) handleHistorySyncNotificationLoop() {
 
 func (cli *Client) handleHistorySyncNotification(notif *waProto.HistorySyncNotification) {
 	var historySync waProto.HistorySync
-	if data, err := cli.Download(notif); err != nil {
+	if data, err := cli.DownloadHistory(notif); err != nil {
 		cli.Log.Errorf("Failed to download history sync data: %v", err)
 	} else if reader, err := zlib.NewReader(bytes.NewReader(data)); err != nil {
 		cli.Log.Errorf("Failed to create zlib reader for history sync data: %v", err)
@@ -325,6 +325,8 @@ func (cli *Client) handleAppStateSyncKeyShare(keys *waProto.AppStateSyncKeyShare
 	onlyResyncIfNotSynced := true
 
 	cli.Log.Debugf("Got %d new app state keys", len(keys.GetKeys()))
+	fmt.Printf("Got %d new app state keys", len(keys.GetKeys()))
+	fmt.Println()
 	cli.appStateKeyRequestsLock.RLock()
 	for _, key := range keys.GetKeys() {
 		marshaledFingerprint, err := proto.Marshal(key.GetKeyData().GetFingerprint())

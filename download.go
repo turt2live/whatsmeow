@@ -15,9 +15,9 @@ import (
 	"io"
 	"net/http"
 
+	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
-	waProto "go.mau.fi/whatsmeow/binary/proto"
 	"go.mau.fi/whatsmeow/socket"
 	"go.mau.fi/whatsmeow/util/cbcutil"
 	"go.mau.fi/whatsmeow/util/hkdfutil"
@@ -118,25 +118,25 @@ var mediaTypeToMMSType = map[MediaType]string{
 }
 
 // DownloadAny loops through the downloadable parts of the given message and downloads the first non-nil item.
-func (cli *Client) DownloadAny(msg *waProto.Message) (data []byte, err error) {
-	if msg == nil {
-		return nil, ErrNothingDownloadableFound
-	}
-	switch {
-	//case msg.ImageMessage != nil:
-	//	return cli.Download(msg.ImageMessage)
-	//case msg.VideoMessage != nil:
-	//	return cli.Download(msg.VideoMessage)
-	//case msg.AudioMessage != nil:
-	//	return cli.Download(msg.AudioMessage)
-	//case msg.DocumentMessage != nil:
-	//	return cli.Download(msg.DocumentMessage)
-	//case msg.StickerMessage != nil:
-	//	return cli.Download(msg.StickerMessage)
-	default:
-		return nil, ErrNothingDownloadableFound
-	}
-}
+//func (cli *Client) DownloadAny(msg *waProto.Message) (data []byte, err error) {
+//	if msg == nil {
+//		return nil, ErrNothingDownloadableFound
+//	}
+//	switch {
+//	//case msg.ImageMessage != nil:
+//	//	return cli.Download(msg.ImageMessage)
+//	//case msg.VideoMessage != nil:
+//	//	return cli.Download(msg.VideoMessage)
+//	//case msg.AudioMessage != nil:
+//	//	return cli.Download(msg.AudioMessage)
+//	//case msg.DocumentMessage != nil:
+//	//	return cli.Download(msg.DocumentMessage)
+//	//case msg.StickerMessage != nil:
+//	//	return cli.Download(msg.StickerMessage)
+//	default:
+//		return nil, ErrNothingDownloadableFound
+//	}
+//}
 
 //func getSize(msg DownloadableMessage) int {
 //	switch sized := msg.(type) {
@@ -176,8 +176,24 @@ func (cli *Client) DownloadThumbnail(x interface{}) ([]byte, error) {
 //	return classToMediaType[msg.ProtoReflect().Descriptor().Name()]
 //}
 
-func (cli *Client) Download(x interface{}) ([]byte, error) {
-	return nil, errors.New("unable to download")
+//func (cli *Client) Download(x interface{}) ([]byte, error) {
+//	return nil, errors.New("unable to download")
+//}
+
+func (cli *Client) DownloadAppState(msg *waProto.ExternalBlobReference) ([]byte, error) {
+	mediaType, ok := classToMediaType["ExternalBlobReference"]
+	if !ok {
+		return nil, fmt.Errorf("%w '%s'", ErrUnknownMediaType, string("ExternalBlobReference"))
+	}
+	return cli.DownloadMediaWithPath(msg.GetDirectPath(), msg.GetFileEncSha256(), msg.GetFileSha256(), msg.GetMediaKey(), int(msg.GetFileSizeBytes()), mediaType, mediaTypeToMMSType[mediaType])
+}
+
+func (cli *Client) DownloadHistory(msg *waProto.HistorySyncNotification) ([]byte, error) {
+	mediaType, ok := classToMediaType["HistorySyncNotification"]
+	if !ok {
+		return nil, fmt.Errorf("%w '%s'", ErrUnknownMediaType, string("HistorySyncNotification"))
+	}
+	return cli.DownloadMediaWithPath(msg.GetDirectPath(), msg.GetFileEncSha256(), msg.GetFileSha256(), msg.GetMediaKey(), int(msg.GetFileLength()), mediaType, mediaTypeToMMSType[mediaType])
 }
 
 // Download downloads the attachment from the given protobuf message.

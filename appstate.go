@@ -24,6 +24,7 @@ import (
 // FetchAppState fetches updates to the given type of app state. If fullSync is true, the current
 // cached state will be removed and all app state patches will be re-fetched from the server.
 func (cli *Client) FetchAppState(name appstate.WAPatchName, fullSync, onlyIfNotSynced bool) error {
+	fmt.Println("Applying app state: " + name)
 	cli.appStateSyncLock.Lock()
 	defer cli.appStateSyncLock.Unlock()
 	if fullSync {
@@ -67,6 +68,8 @@ func (cli *Client) FetchAppState(name appstate.WAPatchName, fullSync, onlyIfNotS
 			var contacts []store.ContactEntry
 			mutations, contacts = cli.filterContacts(mutations)
 			cli.Log.Debugf("Mass inserting app state snapshot with %d contacts into the store", len(contacts))
+			fmt.Printf("Mass inserting app state snapshot with %d contacts into the store", len(contacts))
+			fmt.Println()
 			err = cli.Store.Contacts.PutAllContactNames(contacts)
 			if err != nil {
 				// This is a fairly serious failure, so just abort the whole thing
@@ -79,9 +82,13 @@ func (cli *Client) FetchAppState(name appstate.WAPatchName, fullSync, onlyIfNotS
 	}
 	if fullSync {
 		cli.Log.Debugf("Full sync of app state %s completed. Current version: %d", name, state.Version)
+		fmt.Printf("Full sync of app state %s completed. Current version: %d", name, state.Version)
+		fmt.Println()
 		cli.dispatchEvent(&events.AppStateSyncComplete{Name: name})
 	} else {
 		cli.Log.Debugf("Synced app state %s from version %d to %d", name, version, state.Version)
+		fmt.Printf("Synced app state %s from version %d to %d", name, version, state.Version)
+		fmt.Println()
 	}
 	return nil
 }
@@ -209,8 +216,8 @@ func (cli *Client) dispatchAppState(mutation appstate.Mutation, dispatchEvts boo
 }
 
 func (cli *Client) downloadExternalAppStateBlob(ref *waProto.ExternalBlobReference) ([]byte, error) {
-	//return cli.Download(ref)
-	return nil, errors.New("unable to download")
+	return cli.DownloadAppState(ref)
+	//return nil, errors.New("unable to download")
 }
 
 func (cli *Client) fetchAppStatePatches(name appstate.WAPatchName, fromVersion uint64, snapshot bool) (*appstate.PatchList, error) {
